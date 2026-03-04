@@ -88,10 +88,6 @@ ANSWER:
 ============================================================
 Retrieval‑augmented generation (RAG) is a framework that combines a pre‑trained parametric language model with an explicit non‑parametric memory accessed through a differentiable retrieval mechanism. In practice, a RAG model retrieves relevant documents or passages from an external index and conditions its generation on both the learned parameters and the retrieved content, enabling more factual and specific text generation. This approach is presented as a general‑purpose fine‑tuning recipe for language generation tasks【3】.
 
-------------------------------------------------------------
-SOURCES:
-------------------------------------------------------------
-
 **Example 2: "What's chain of thought?"**
 
 2026-03-04 16:13:54.813 | INFO     | __main__:main:28 - Retrieving relevant documents...
@@ -102,10 +98,6 @@ SOURCES:
 ANSWER:
 ============================================================
 A **chain of thought** is a sequence of intermediate reasoning steps that a model generates to arrive at a final answer.  It mimics a step‑by‑step thought process, resembling a solution but is distinguished as a "chain of thought" to emphasize the sequential reasoning that leads to the answer rather than just the answer itself【3】.  This approach has been shown to be useful beyond merely activating knowledge, as the sequential reasoning embodied in the chain of thought can improve performance on certain tasks【1】【2】.
-
-------------------------------------------------------------
-SOURCES:
-------------------------------------------------------------
 
 **Example 3: Explain what Clinical Renal Replacement Therapy is ?**
 
@@ -118,7 +110,3 @@ ANSWER:
 ============================================================
 Clinical Renal Replacement Therapy (CRRT) is a continuous dialysis‑based treatment that is routinely used in Intensive Care Units (ICUs) to support patients who are suffering from Acute Kidney Injury (AKI) and other severe, multifactorial health conditions. It provides ongoing removal of waste products, fluid, and electrolytes, thereby helping to stabilize the patient's metabolic status while the kidneys recover or while the underlying disease is managed [3].
 
-------------------------------------------------------------
-SOURCES:
-------------------------------------------------------------
-  - ml_CRRT.pdf
