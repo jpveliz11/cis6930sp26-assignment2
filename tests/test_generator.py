@@ -2,7 +2,8 @@
 
 import pytest
 from unittest.mock import Mock, patch
-from langchain.schema import Document
+from langchain_core.documents import Document
+
 
 from generator import format_context, generate_answer, generate_answer_with_citations, _extract_citations
 

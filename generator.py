@@ -9,15 +9,21 @@ Run tests: uv run pytest tests/test_generator.py
 import re
 
 from dotenv import load_dotenv
-from langchain.schema import Document
+from langchain_core.documents import Document
 from langchain_openai import ChatOpenAI
+import os
 
 load_dotenv()
 
 
-def get_llm(model: str = "gpt-4o-mini", temperature: float = 0.1) -> ChatOpenAI:
+def get_llm(model: str = "gpt-oss-20b", temperature: float = 0.1) -> ChatOpenAI:
     """Get a configured LLM instance. (Provided)"""
-    return ChatOpenAI(model=model, temperature=temperature)
+    return ChatOpenAI(
+        model=model,
+        temperature=temperature,
+        api_key=os.getenv("OPENAI_API_KEY"),
+        base_url=os.getenv("NAVIGATOR_API_BASE"),
+    )
 
 
 def format_context(docs: list[Document]) -> str:
@@ -49,7 +55,33 @@ def generate_answer(query: str, context_docs: list[Document], llm=None) -> str:
     - Create a prompt asking the model to answer based on the context
     - Call llm.invoke(prompt) and return .content
     """
-    raise NotImplementedError("Implement generate_answer")
+
+
+    if llm is None:
+        llm = get_llm()
+
+    context_text = format_context(context_docs)
+
+    prompt = f"""
+        You are a research assistant answering questions about academic papers.
+
+        Use ONLY the provided context to answer the question.
+        If the answer is not contained in the context, say you don't know.
+
+        Context:
+        {context_text}
+
+        Question:
+        {query}
+
+        Answer:
+    """
+
+    response = llm.invoke(prompt)
+
+    return response.content
+
+    # raise NotImplementedError("Implement generate_answer")
 
 
 def generate_answer_with_citations(
@@ -73,7 +105,50 @@ def generate_answer_with_citations(
     - Parse citations from the response using _extract_citations()
     - Return structured output
     """
-    raise NotImplementedError("Implement generate_answer_with_citations")
+
+    #raise NotImplementedError("Implement generate_answer_with_citations")
+
+    if llm is None:
+        llm = get_llm()
+
+    # Build numbered sources for the prompt
+    numbered_sources = []
+    for idx, doc in enumerate(context_docs, start=1):
+        source = doc.metadata.get("source", "unknown")
+        numbered_sources.append(f"[{idx}] ({source})\n{doc.page_content}")
+
+    sources_text = "\n\n".join(numbered_sources) if numbered_sources else "No sources retrieved."
+
+    prompt = f"""
+        You are a research assistant answering questions about academic papers.
+
+        Use ONLY the sources below to answer the question.
+        When you use information from a source, cite it using bracket numbers like [1], [2], etc.
+        If the answer is not contained in the sources, say you don't know.
+
+        Sources:
+        {sources_text}
+
+        Question:
+        {query}
+
+        Answer (with citations):
+    """
+
+    response = llm.invoke(prompt)
+    answer_text = response.content
+    cited_numbers = _extract_citations(answer_text, max_source=len(context_docs))
+
+    citations = []
+    for n in cited_numbers:
+        i = n - 1
+        if 0 <= i < len(context_docs):
+            citations.append(context_docs[i].metadata)
+
+    return {
+        "answer": answer_text,
+        "citations": citations,
+    }
 
 
 def _extract_citations(text: str, max_source: int) -> list[int]:

@@ -29,7 +29,15 @@ def precision_at_k(retrieved_ids: list[str], relevant_ids: list[str], k: int) ->
 
     TODO: Implement this function.
     """
-    raise NotImplementedError("Implement precision_at_k")
+    if k <= 0:
+        return 0.0
+
+    top_k = retrieved_ids[:k]
+
+    relevant_set = set(relevant_ids)
+    num_relevant = sum(1 for doc_id in top_k if doc_id in relevant_set)
+
+    return num_relevant / k
 
 
 def recall_at_k(retrieved_ids: list[str], relevant_ids: list[str], k: int) -> float:
@@ -68,4 +76,21 @@ def mean_reciprocal_rank(queries_results: list[tuple[list[str], str]]) -> float:
 
     TODO: Implement this function.
     """
-    raise NotImplementedError("Implement mean_reciprocal_rank")
+
+    if not queries_results:
+        return 0.0
+
+    reciprocal_sum = 0.0
+
+    for retrieved_ids, first_relevant_id in queries_results:
+        reciprocal_rank = 0.0
+
+        for rank, doc_id in enumerate(retrieved_ids, start=1):
+            if doc_id == first_relevant_id:
+                reciprocal_rank = 1 / rank
+                break
+
+        reciprocal_sum += reciprocal_rank
+
+    return reciprocal_sum / len(queries_results)
+    #raise NotImplementedError("Implement mean_reciprocal_rank")

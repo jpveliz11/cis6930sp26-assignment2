@@ -1,7 +1,7 @@
 """Vector store operations for RAG.
 
 This module provides functions to create and query a Chroma vector database
-for document retrieval.
+for dpyocument retrieval.
 
 Run tests: uv run pytest tests/test_vectorstore.py
 """
@@ -10,7 +10,9 @@ from pathlib import Path
 
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
-from langchain.schema import Document
+from langchain_core.documents import Document
+import os
+import tempfile
 
 # Default configuration
 CHROMA_DB_PATH = Path("./chroma_db")
@@ -50,7 +52,43 @@ def create_vectorstore(
     - Create Chroma vector store using Chroma.from_texts()
     - Persist to the specified directory
     """
-    raise NotImplementedError("Implement create_vectorstore")
+
+    if len(chunks) != len(metadatas):
+        raise ValueError(
+            f"chunks and metadatas must be same length. Got {len(chunks)} chunks and {len(metadatas)} metadatas."
+        )
+
+    embeddings = get_embeddings()
+
+    persist_path = Path(persist_directory).resolve()
+    temp_root = Path(tempfile.gettempdir()).resolve()
+    in_temp_dir = (temp_root == persist_path) or (temp_root in persist_path.parents)
+
+    if os.name == "nt" and in_temp_dir:
+        try:
+            existing = Chroma(collection_name=collection_name, embedding_function=embeddings)
+            existing.delete_collection()
+        except Exception:
+            pass
+
+        return Chroma.from_texts(
+            texts=chunks,
+            embedding=embeddings,
+            metadatas=metadatas,
+            collection_name=collection_name,
+        )
+
+    os.makedirs(str(persist_path), exist_ok=True)
+    return Chroma.from_texts(
+        texts=chunks,
+        embedding=embeddings,
+        metadatas=metadatas,
+        collection_name=collection_name,
+        persist_directory=str(persist_path),
+    )
+
+
+    # raise NotImplementedError("Implement create_vectorstore")
 
 
 def load_vectorstore(
@@ -82,7 +120,7 @@ def retrieve(vectorstore: Chroma, query: str, k: int = 3) -> list[Document]:
     - Use vectorstore.similarity_search()
     - Return top k results
     """
-    raise NotImplementedError("Implement retrieve")
+    return vectorstore.similarity_search(query, k=k)
 
 
 def retrieve_with_scores(
@@ -103,4 +141,4 @@ def retrieve_with_scores(
     - Use vectorstore.similarity_search_with_score()
     - Return documents with their scores
     """
-    raise NotImplementedError("Implement retrieve_with_scores")
+    return vectorstore.similarity_search_with_score(query, k=k)
